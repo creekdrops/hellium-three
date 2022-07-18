@@ -1,0 +1,27 @@
+{
+  "name": "heliumthree",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "hardhat test",
+    "test:coverage": "hardhat coverage",
+    "test:gas": "REPORT_GAS=true npx hardhat test",
+    "deploy:token": "hardhat run scripts/1_deployToken.ts --network truffle",
+    "deploy:staking": "hardhat run scripts/1_deployStaking.ts --network truffle"
+  },
+  "author": "CREEK",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^1.0.2",
+    "chai": "^4.3.6",
+    "chai-as-promised": "^7.1.1",
+    "erc721a": "^4.1.0",
+    "hardhat": "^2.10.1",
+    "hardhat-gas-reporter": "^1.0.8",
+    "solidity-coverage": "^0.7.21"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.7.0"
+  }
+}
