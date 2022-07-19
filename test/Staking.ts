@@ -3,8 +3,8 @@ import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { ethers } from "hardhat";
 import {
-  HelliumThree,
-  HelliumThreeStaking,
+  HeliumThree,
+  HeliumThreeStaking,
   NonStakeable,
   Stakeable,
   StakeableTwo
@@ -21,8 +21,8 @@ describe("Staking", function () {
   let stakeable!: Stakeable;
   let stakeableTwo!: StakeableTwo;
   let nonStakeable!: NonStakeable;
-  let helliumThree!: HelliumThree;
-  let helliumThreeStaking!: HelliumThreeStaking;
+  let heliumThree!: HeliumThree;
+  let heliumThreeStaking!: HeliumThreeStaking;
   let minterRole!: string;
   let adminRole!: string;
 
@@ -34,20 +34,20 @@ describe("Staking", function () {
   describe("Deployment", function () {
     it("Should deploy the ERC20 contract", async () => {
       const Contract = await ethers.getContractFactory(config.erc20.contract);
-      helliumThree = (await Contract.deploy(
+      heliumThree = (await Contract.deploy(
         ...config.erc20.args
-      )) as HelliumThree;
-      await helliumThree.deployed();
-      adminRole = await helliumThree.DEFAULT_ADMIN_ROLE();
-      minterRole = await helliumThree.MINTER_ROLE();
+      )) as HeliumThree;
+      await heliumThree.deployed();
+      adminRole = await heliumThree.DEFAULT_ADMIN_ROLE();
+      minterRole = await heliumThree.MINTER_ROLE();
     });
 
     it("Should deploy the Staking contract", async () => {
       const Contract = await ethers.getContractFactory(config.staking.contract);
-      helliumThreeStaking = (await Contract.deploy(
-        helliumThree.address
-      )) as HelliumThreeStaking;
-      await helliumThreeStaking.deployed();
+      heliumThreeStaking = (await Contract.deploy(
+        heliumThree.address
+      )) as HeliumThreeStaking;
+      await heliumThreeStaking.deployed();
     });
 
     it("Should deploy the Nft contracts", async () => {
@@ -60,21 +60,21 @@ describe("Staking", function () {
     });
 
     it("Should set the right admin for token contract", async function () {
-      expect(await helliumThree.hasRole(adminRole, admin.address)).to.equal(
+      expect(await heliumThree.hasRole(adminRole, admin.address)).to.equal(
         true
       );
     });
 
     it("Should set the right admin for staking contract", async function () {
       expect(
-        await helliumThreeStaking.hasRole(adminRole, admin.address)
+        await heliumThreeStaking.hasRole(adminRole, admin.address)
       ).to.equal(true);
     });
 
     it("Should set the right token name and symbol", async function () {
       const [name, symbol] = config.erc20.args
-      expect(await helliumThree.name()).to.equal(name);
-      expect(await helliumThree.symbol()).to.equal(symbol);
+      expect(await heliumThree.name()).to.equal(name);
+      expect(await heliumThree.symbol()).to.equal(symbol);
     });
 
     /// BEGIN: NFT CONTRACTS
@@ -94,10 +94,10 @@ describe("Staking", function () {
     it("Should let users set ApprovalForAll", async () => {
       await stakeable
         .connect(signerWithApprovalForAll)
-        .setApprovalForAll(helliumThreeStaking.address, true);
+        .setApprovalForAll(heliumThreeStaking.address, true);
       await stakeableTwo
         .connect(signerWithApprovalForAll)
-        .setApprovalForAll(helliumThreeStaking.address, true);
+        .setApprovalForAll(heliumThreeStaking.address, true);
     });
     /// END: NFT CONTRACT
   });
@@ -105,100 +105,100 @@ describe("Staking", function () {
   describe("He3 Minting", function () {
     it("Should fail if unauthorized user tries minting He3", async () => {
       await expect(
-        helliumThree
+        heliumThree
           .connect(signerWithApprovalForAll)
           .mint(signerWithApprovalForAll.address, 1000)
       ).to.be.revertedWith(
         `AccessControl: account ${signerWithApprovalForAll.address.toLocaleLowerCase()} is missing role ${minterRole}`
       );
-      await helliumThree.connect(admin).mint(admin.address, 10000);
+      await heliumThree.connect(admin).mint(admin.address, 10000);
     });
 
     it("Should allow admin to grant MINTER_ROLE to address", async () => {
-      await helliumThree
+      await heliumThree
         .connect(admin)
-        .grantRole(minterRole, helliumThreeStaking.address);
+        .grantRole(minterRole, heliumThreeStaking.address);
     });
   });
 
   describe("Staking", function () {
     it("Should allow admin to permit staking for assets", () => {
-      helliumThreeStaking.connect(admin).permitStaking(stakeable.address, 10);
-      helliumThreeStaking
+      heliumThreeStaking.connect(admin).permitStaking(stakeable.address, 10);
+      heliumThreeStaking
         .connect(admin)
         .permitStaking(stakeableTwo.address, 10);
     });
     it("Should fail if user tries staking unauthorized NFT", async () => {
-      await helliumThreeStaking.revokeStaking(nonStakeable.address);
+      await heliumThreeStaking.revokeStaking(nonStakeable.address);
 
       await expect(
-        helliumThreeStaking
+        heliumThreeStaking
           .connect(signerWithApprovalForAll)
           .stake(nonStakeable.address, 0)
       ).to.be.revertedWith(`Staking not permited for asset.`);
     });
     it("Should fail if user tries staking NFT they don't own", async () => {
       await expect(
-        helliumThreeStaking
+        heliumThreeStaking
           .connect(signerWithApprovalForAll)
           .stake(stakeable.address, 10)
       ).to.be.revertedWith(`You don't own this token!`);
     });
     it("Should allow staker to stake multiple NFTs", async () => {
-      await helliumThreeStaking
+      await heliumThreeStaking
         .connect(signerWithApprovalForAll)
         .stake(stakeable.address, 0);
-      await helliumThreeStaking
+      await heliumThreeStaking
         .connect(signerWithApprovalForAll)
         .stake(stakeable.address, 1);
-      await helliumThreeStaking
+      await heliumThreeStaking
         .connect(signerWithApprovalForAll)
         .stake(stakeableTwo.address, 0);
-      await helliumThreeStaking
+      await heliumThreeStaking
         .connect(signerWithApprovalForAll)
         .stake(stakeableTwo.address, 1);
 
       await stakeable
         .connect(signerWithoutApprovalForAll)
-        .setApprovalForAll(helliumThreeStaking.address, true);
+        .setApprovalForAll(heliumThreeStaking.address, true);
 
-      await helliumThreeStaking
+      await heliumThreeStaking
         .connect(signerWithoutApprovalForAll)
         .stake(stakeable.address, 10);
 
       expect(
-        await helliumThreeStaking.getOwnerOfStakedTokenId(stakeable.address, 0)
+        await heliumThreeStaking.getOwnerOfStakedTokenId(stakeable.address, 0)
       ).to.eq(signerWithApprovalForAll.address);
       expect(
-        await helliumThreeStaking.getOwnerOfStakedTokenId(stakeable.address, 1)
+        await heliumThreeStaking.getOwnerOfStakedTokenId(stakeable.address, 1)
       ).to.eq(signerWithApprovalForAll.address);
       expect(
-        await helliumThreeStaking.getOwnerOfStakedTokenId(
+        await heliumThreeStaking.getOwnerOfStakedTokenId(
           stakeableTwo.address,
           0
         )
       ).to.eq(signerWithApprovalForAll.address);
       expect(
-        await helliumThreeStaking.getOwnerOfStakedTokenId(
+        await heliumThreeStaking.getOwnerOfStakedTokenId(
           stakeableTwo.address,
           1
         )
       ).to.eq(signerWithApprovalForAll.address);
     });
     it("Should allow stakers to unstake NFTs", async () => {
-      await helliumThreeStaking
+      await heliumThreeStaking
         .connect(signerWithApprovalForAll)
         .withdraw(stakeable.address, 0);
     });
 
     it("Should fail to withdraw if no NFTs are staked", async () => {
       await expect(
-        helliumThreeStaking.connect(nonStaker).withdraw(stakeable.address, 0)
+        heliumThreeStaking.connect(nonStaker).withdraw(stakeable.address, 0)
       ).to.be.revertedWith("You have no tokens staked");
     });
     it("Should fail if user tries to unstake NFT they do not own", async () => {
       await expect(
-        helliumThreeStaking
+        heliumThreeStaking
           .connect(signerWithoutApprovalForAll)
           .withdraw(stakeable.address, 1)
       ).to.be.revertedWith("You don't own this token!");
@@ -210,7 +210,7 @@ describe("Staking", function () {
       expect(
         parseInt(
           ethers.utils.formatEther(
-            await helliumThreeStaking
+            await heliumThreeStaking
               .connect(signerWithApprovalForAll)
               .calculateRewards(signerWithApprovalForAll.address)
           )
@@ -218,13 +218,13 @@ describe("Staking", function () {
       ).to.be.greaterThanOrEqual(30);
     });
     it("Should allow users to claim rewards", async () => {
-      await helliumThreeStaking
+      await heliumThreeStaking
         .connect(signerWithApprovalForAll)
         .claimRewards();
     });
     it("Should fail if non-staker tries to claim", async () => {
       await expect(
-        helliumThreeStaking.connect(nonStaker).claimRewards()
+        heliumThreeStaking.connect(nonStaker).claimRewards()
       ).to.be.revertedWith("You have no rewards to claim");
     });
   });

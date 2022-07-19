@@ -8,18 +8,18 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**
- * @title Hellium Three Staking Contract
+ * @title Helium Three Staking Contract
  * @author CREEK
  * @notice Staking contract for NFT assets created by CREEK used to mint
- * the IHelliumThree ($HE3) Community Token.
+ * the IHeliumThree ($HE3) Community Token.
  */
 
-interface IHelliumThree is IERC20 {
+interface IHeliumThree is IERC20 {
     function mint(address _to, uint256 _amount) external;
 }
 
-contract HelliumThreeStaking is ReentrancyGuard, AccessControl {
-    IHelliumThree public immutable rewardsToken;
+contract HeliumThreeStaking is ReentrancyGuard, AccessControl {
+    IHeliumThree public immutable rewardsToken;
 
     struct StakedToken {
         address staker;
@@ -68,7 +68,7 @@ contract HelliumThreeStaking is ReentrancyGuard, AccessControl {
         uint256 _tokenId
     );
 
-    constructor(IHelliumThree _rewardTokenContract) {
+    constructor(IHeliumThree _rewardTokenContract) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         rewardsToken = _rewardTokenContract;
     }

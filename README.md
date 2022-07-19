@@ -1,6 +1,6 @@
-# Hellium Three Token and Staking contracts
+# Helium Three Token and Staking contracts
 
-This project contains smart contracts for both the Hellium Three community token as well as an ERC721 Staking contract,
+This project contains smart contracts for both the Helium Three community token as well as an ERC721 Staking contract,
 which allows users to earn rewards for assets that they stake to the contract.
 
 ## Get Started

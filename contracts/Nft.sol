@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 /**
- * @dev These contracts are simply here for testing the HelliumThreeStaking
+ * @dev These contracts are simply here for testing the HeliumThreeStaking
  * contract and are not intended to be deployed.
  */
 
