@@ -68,8 +68,14 @@ contract HeliumThreeStaking is ReentrancyGuard, AccessControl {
         uint256 _tokenId
     );
 
+    event AssetUnstaked(
+        address indexed _account,
+        IERC721 _contractAddress,
+        uint256 _tokenId
+    );
+
     constructor(IHeliumThree _rewardTokenContract) {
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
         rewardsToken = _rewardTokenContract;
     }
 
@@ -85,42 +91,42 @@ contract HeliumThreeStaking is ReentrancyGuard, AccessControl {
         );
 
         // If wallet has tokens staked, calculate the rewards before adding the new token
-        if (stakers[msg.sender].amountStaked[_contractAddress] > 0) {
+        if (stakers[_msgSender()].amountStaked[_contractAddress] > 0) {
             uint256 rewards = calculateRewardsPerContract(
                 _contractAddress,
-                msg.sender
+                _msgSender()
             );
-            stakers[msg.sender].unclaimedRewards[_contractAddress] += rewards;
+            stakers[_msgSender()].unclaimedRewards[_contractAddress] += rewards;
         }
 
         IERC721 nftCollection = _contractAddress;
 
         // Wallet must own the token they are trying to stake
         require(
-            nftCollection.ownerOf(_tokenId) == msg.sender,
+            nftCollection.ownerOf(_tokenId) == _msgSender(),
             "You don't own this token!"
         );
 
         // Transfer the token from the wallet to the Smart contract
-        nftCollection.transferFrom(msg.sender, address(this), _tokenId);
+        nftCollection.transferFrom(_msgSender(), address(this), _tokenId);
 
         // Create StakedToken
-        StakedToken memory stakedToken = StakedToken(msg.sender, _tokenId);
+        StakedToken memory stakedToken = StakedToken(_msgSender(), _tokenId);
 
         // Add staked token to mapping
-        stakers[msg.sender].stakedTokens[_contractAddress].push(stakedToken);
+        stakers[_msgSender()].stakedTokens[_contractAddress].push(stakedToken);
 
         // Increment the amount staked for this wallet
-        stakers[msg.sender].amountStaked[_contractAddress]++;
+        stakers[_msgSender()].amountStaked[_contractAddress]++;
 
         // Update the mapping of the tokenId to the staker's address
-        stakerAddress[getStakeKey(_contractAddress, _tokenId)] = msg.sender;
+        stakerAddress[getStakeKey(_contractAddress, _tokenId)] = _msgSender();
 
         // Update the timeOfLastUpdate for the staker
-        stakers[msg.sender].timeOfLastUpdate[_contractAddress] = block
+        stakers[_msgSender()].timeOfLastUpdate[_contractAddress] = block
             .timestamp;
 
-        emit AssetStaked(msg.sender, _contractAddress, _tokenId);
+        emit AssetStaked(_msgSender(), _contractAddress, _tokenId);
     }
 
     /**
@@ -137,31 +143,31 @@ contract HeliumThreeStaking is ReentrancyGuard, AccessControl {
 
         /// Make sure the user has at least one token staked before withdrawing
         require(
-            stakers[msg.sender].amountStaked[_contractAddress] > 0,
+            stakers[_msgSender()].amountStaked[_contractAddress] > 0,
             "You have no tokens staked"
         );
 
         /// Wallet must own the token they are trying to withdraw
         require(
             stakerAddress[getStakeKey(_contractAddress, _tokenId)] ==
-                msg.sender,
+                _msgSender(),
             "You don't own this token!"
         );
 
         /// Update the rewards for this user, as the amount of rewards decreases with less tokens.
-        uint256 rewards = calculateRewards(msg.sender);
-        stakers[msg.sender].unclaimedRewards[_contractAddress] += rewards;
+        uint256 rewards = calculateRewards(_msgSender());
+        stakers[_msgSender()].unclaimedRewards[_contractAddress] += rewards;
 
         /// Find the index of this token id in the stakedTokens array
         uint256 index = 0;
         for (
             uint256 i = 0;
-            i < stakers[msg.sender].stakedTokens[_contractAddress].length;
+            i < stakers[_msgSender()].stakedTokens[_contractAddress].length;
             i++
         ) {
             if (
-                stakers[msg.sender].stakedTokens[_contractAddress][i].tokenId ==
-                _tokenId
+                stakers[_msgSender()]
+                .stakedTokens[_contractAddress][i].tokenId == _tokenId
             ) {
                 index = i;
                 break;
@@ -169,21 +175,23 @@ contract HeliumThreeStaking is ReentrancyGuard, AccessControl {
         }
 
         /// Set this token's .staker to be address 0 to mark it as no longer staked
-        stakers[msg.sender]
+        stakers[_msgSender()]
         .stakedTokens[_contractAddress][index].staker = address(0);
 
         /// Decrement the amount staked for this wallet
-        stakers[msg.sender].amountStaked[_contractAddress]--;
+        stakers[_msgSender()].amountStaked[_contractAddress]--;
 
         /// Update the mapping of the tokenId to the be address(0) to indicate that the token is no longer staked
         stakerAddress[getStakeKey(_contractAddress, _tokenId)] = address(0);
 
         /// Transfer the token back to the withdrawer
-        nftCollection.transferFrom(address(this), msg.sender, _tokenId);
+        nftCollection.transferFrom(address(this), _msgSender(), _tokenId);
 
         /// Update the timeOfLastUpdate for the withdrawer
-        stakers[msg.sender].timeOfLastUpdate[_contractAddress] = block
+        stakers[_msgSender()].timeOfLastUpdate[_contractAddress] = block
             .timestamp;
+
+        emit AssetUnstaked(_msgSender(), _contractAddress, _tokenId);
     }
 
     /// @dev Utility function to return the hash key of the contract address
@@ -238,15 +246,15 @@ contract HeliumThreeStaking is ReentrancyGuard, AccessControl {
 
     /**
      * @notice Allows users to claim all accumulated rewards based on their stake.
-     * @dev Calculate rewards for the msg.sender, check if there are any rewards
+     * @dev Calculate rewards for the _msgSender(), check if there are any rewards
      * claim, reset all rewards back to 0 and transfer the ERC20 Reward token
      * to the user.
      */
     function claimRewards() public {
-        uint256 rewards = calculateRewards(msg.sender);
+        uint256 rewards = calculateRewards(_msgSender());
         require(rewards > 0, "You have no rewards to claim");
-        resetRewards(msg.sender);
-        rewardsToken.mint(msg.sender, rewards);
+        resetRewards(_msgSender());
+        rewardsToken.mint(_msgSender(), rewards);
     }
 
     /**
