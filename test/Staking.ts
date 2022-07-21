@@ -111,7 +111,19 @@ describe("Staking", function () {
       ).to.be.revertedWith(
         `AccessControl: account ${signerWithApprovalForAll.address.toLocaleLowerCase()} is missing role ${minterRole}`
       );
-      await heliumThree.connect(admin).mint(admin.address, 10000);
+      await heliumThree
+        .connect(admin)
+        .mint(signerWithApprovalForAll.address, ethers.utils.parseEther("10"));
+    });
+
+    it("Should allow users to burn their tokens", async () => {
+      await heliumThree
+        .connect(signerWithApprovalForAll)
+        .burn(ethers.utils.parseEther("5"));
+
+      expect(
+        await heliumThree.balanceOf(signerWithApprovalForAll.address)
+      ).to.be.eq(ethers.utils.parseEther("5"));
     });
 
     it("Should allow admin to grant MINTER_ROLE to address", async () => {
